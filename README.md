@@ -10,6 +10,8 @@ This is the **first playable build** (vertical slice). It runs in a browser with
 
 **Play in your browser: https://sidxcodes.github.io/rustbound/** (about 30 MB to load the first time).
 
+Also on itch.io: **https://zenitsuuu.itch.io/rustbound** (same game, with comments).
+
 The whole game is one HTML file, published on the `gh-pages` branch. To play offline, download that `index.html` and open it in
 Chrome, Edge or Firefox: no server, no install. Building it yourself (`npm run build`) writes it to `dist/index.html`.
 
