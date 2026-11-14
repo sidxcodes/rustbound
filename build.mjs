@@ -26,7 +26,10 @@ const credits = existsSync('src/assets/LICENSE.md') ? `<!--\n${readFileSync('src
 const fragment = `${credits}${page}\n<script>\n${js}\n</script>\n`;
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/fragment.html', fragment);
-writeFileSync('dist/index.html', `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n</head>\n<body style="margin:0">\n${fragment}</body>\n</html>\n`);
+// page title, description and a small rust-coloured icon (inline, so the page stays one file)
+const icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2314171a'/%3E%3Cpath d='M18 50V14h16a10 10 0 0 1 0 20h-6l14 16h-9L20 34v16z' fill='%23d97a3a'/%3E%3C/svg%3E";
+const head = `<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<title>Rustbound</title>\n<meta name="description" content="Top-down survival game: scavenge parts, fix a rusty pickup and drive east across the wasteland. Plays in the browser.">\n<link rel="icon" href="${icon}">`;
+writeFileSync('dist/index.html', `<!doctype html>\n<html lang="en">\n<head>\n${head}\n</head>\n<body style="margin:0">\n${fragment}</body>\n</html>\n`);
 const mb = statSync('dist/index.html').size / 1048576;
 console.log(`built dist/index.html (${mb.toFixed(1)} MB)`);
 if (mb > 60) { console.error('dist/index.html is over the 60 MB limit'); process.exit(1); }

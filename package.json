@@ -6,7 +6,8 @@
     "build": "node build.mjs",
     "test": "node build.mjs && node tests/playthrough.mjs",
     "assets": "node tools/fetch-polyhaven.mjs && node tools/convert-textures.mjs && node tools/convert-models.mjs && node tools/bake-impostors.mjs && node tools/convert-env.mjs && node tools/convert-mixamo.mjs && node tools/convert-vehicles.mjs && node tools/write-licenses.mjs",
-    "shots": "node build.mjs && node tests/shots.mjs tests/shots"
+    "shots": "node build.mjs && node tests/shots.mjs tests/shots",
+    "publish:pages": "node tools/publish-pages.mjs"
   },
   "dependencies": {
     "three": "^0.170.0"

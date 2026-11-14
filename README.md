@@ -99,6 +99,7 @@ npm run build     # bundles src/ and every converted asset into dist/index.html 
 npm test          # builds, then plays the whole game in headless Chromium and checks 45 things
 npm run assets    # downloads the Poly Haven assets and rebuilds every converted file in src/assets
 npm run shots     # screenshots of every region by day and night, plus frame times on High and Low
+npm run publish:pages  # builds and publishes the game to GitHub Pages (the gh-pages branch)
 ```
 
 The test needs Playwright's Chromium once: `npx playwright install chromium`. `tests/shots.mjs` takes `soft` (no GPU),
