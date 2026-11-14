@@ -1,0 +1,170 @@
+<title>Rustbound</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: the 3D view fills the screen; HUD sits in the four corners; panels are centred sheets over the view. */
+:root {
+  --soot: #14171a; --panel: #1b2124; --panel-2: #242c30; --line: #37424a;
+  --bone: #ebe4d2; --dim: #9aa5a1; --rust: #d97a3a; --teal: #7fb3b0;
+  --ok: #93b65c; --warn: #e2b445; --bad: #df5a44;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--soot); color: var(--bone); font-family: var(--body); font-size: 14px; overflow: hidden; }
+#app { position: relative; height: 100%; overflow: hidden; user-select: none; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+kbd { font-family: var(--display); font-weight: 600; font-size: 0.95em; background: var(--bone); color: var(--soot); border-radius: 3px; padding: 0 6px; margin-right: 2px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* ---------- HUD ---------- */
+.hud { position: absolute; pointer-events: none; display: flex; flex-direction: column; gap: 8px; }
+.hud-tl { top: 12px; left: max(16px, env(safe-area-inset-left, 0px)); width: 210px; }
+.hud-tr { top: 12px; right: max(16px, env(safe-area-inset-right, 0px)); width: 250px; align-items: stretch; }
+.hud-bl { bottom: 12px; left: max(16px, env(safe-area-inset-left, 0px)); color: var(--dim); font-size: 12px; text-shadow: 0 1px 2px #000; }
+.hud-br { bottom: 12px; right: max(16px, env(safe-area-inset-right, 0px)); width: 230px; }
+.hud-bc { bottom: 46px; left: 50%; transform: translateX(-50%); align-items: center; width: min(560px, calc(100% - 32px)); }
+.card { background: color-mix(in srgb, var(--panel) 86%, transparent); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+.vital { display: grid; grid-template-columns: 66px 1fr 30px; align-items: center; gap: 6px; font-family: var(--display); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; }
+.vital + .vital { margin-top: 5px; }
+.vital .num { text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: #0c0e10; border-radius: 2px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 50%; background: var(--teal); }
+.bar.health > i { background: var(--bad); } .bar.hunger > i { background: var(--warn); } .bar.thirst > i { background: var(--teal); } .bar.stamina > i { background: var(--ok); }
+.vital.low { color: var(--bad); }
+.where { font-family: var(--display); font-size: 15px; letter-spacing: 0.05em; display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
+#minimap { width: 100%; height: auto; display: block; border-radius: 2px; }
+.goal-label { font-family: var(--display); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rust); }
+.goal-text { font-size: 14px; font-weight: 500; line-height: 1.3; margin-top: 2px; }
+.goal-hint { color: var(--dim); font-size: 12.5px; margin-top: 3px; line-height: 1.3; }
+.goal-count { color: var(--dim); font-size: 12px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+#prompt { background: color-mix(in srgb, var(--soot) 88%, transparent); border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; font-size: 14px; }
+#toasts { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.toast { background: color-mix(in srgb, var(--panel) 92%, transparent); border-left: 3px solid var(--rust); padding: 5px 10px; border-radius: 2px; font-size: 13.5px; animation: toast 3.6s forwards; }
+@keyframes toast { 0% { opacity: 0; transform: translateY(6px); } 8%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+#warn { color: var(--bad); font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 0 1px 3px #000; }
+.speed { font-family: var(--display); font-weight: 700; font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+.speed small { font-size: 14px; font-weight: 500; color: var(--dim); letter-spacing: 0.08em; margin-left: 4px; }
+.gauge { display: grid; grid-template-columns: 52px 1fr 48px; gap: 6px; align-items: center; font-size: 12px; margin-top: 6px; font-family: var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
+.gauge .num { text-align: right; font-variant-numeric: tabular-nums; }
+.gauge.hot { color: var(--bad); } .gauge.hot .bar > i { background: var(--bad); }
+
+#app.intro .hud { display: none; }
+
+/* ---------- panels ---------- */
+.sheet-wrap { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(8, 10, 11, 0.5); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+.sheet { width: min(900px, 100%); max-height: 100%; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--rust); border-radius: 4px; padding: 16px 18px 18px; }
+.sheet h2 { font-family: var(--display); font-weight: 700; font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0; text-wrap: balance; }
+.sheet-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.sheet-head .sub { color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cols > * { min-width: 0; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0 0 6px; }
+.list { display: flex; flex-direction: column; gap: 3px; }
+.row { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; background: var(--panel-2); border: 1px solid transparent; border-radius: 3px; padding: 6px 8px; }
+.row:hover { border-color: var(--line); } .row.sel { border-color: var(--rust); }
+.chip { font-family: var(--display); font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-align: center; padding: 2px 0; border-radius: 2px; background: #0f1214; color: var(--teal); }
+.chip.part { color: var(--rust); } .chip.food, .chip.drink, .chip.med { color: var(--ok); } .chip.weapon { color: var(--bad); } .chip.fuel, .chip.repair { color: var(--warn); }
+.row .meta { color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.empty { color: var(--dim); padding: 10px 2px; font-size: 13px; }
+.detail { margin-top: 10px; padding: 10px; background: #12161a; border-radius: 3px; min-height: 76px; }
+.detail p { margin: 4px 0 8px; color: var(--dim); line-height: 1.35; }
+.btn { background: var(--rust); color: #1a0f08; border: 0; border-radius: 3px; padding: 6px 12px; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; }
+.btn:hover { filter: brightness(1.1); }
+.btn.ghost { background: transparent; color: var(--bone); border: 1px solid var(--line); }
+.btn[disabled] { opacity: 0.4; cursor: default; filter: none; }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.tab { background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 4px 10px; font-family: var(--display); font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.tab.on { color: var(--bone); border-color: var(--rust); }
+.status { padding: 8px 10px; border-radius: 3px; font-size: 13.5px; line-height: 1.4; margin-bottom: 12px; border-left: 3px solid var(--bad); background: #12161a; }
+.status.ready { border-color: var(--ok); }
+.status ul { margin: 2px 0 0; padding-left: 18px; }
+/* truck schematic: front of the truck is the top of the grid */
+.truck { display: grid; gap: 5px; grid-template-columns: 1fr 1.25fr 1fr;
+  grid-template-areas: ". bumper ." "wheelFL lights wheelFR" "wheelFL radiator wheelFR" ". engine ." ". battery ." ". rack ." "wheelRL tank wheelRR"; }
+.slot { background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; padding: 5px 7px; text-align: left; min-height: 44px; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.slot .name { font-family: var(--display); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.slot .state { font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.slot.missing { border-style: dashed; } .slot.missing.req { border-color: var(--bad); } .slot.missing.req .state { color: var(--bad); }
+.slot.sel { border-color: var(--rust); box-shadow: inset 0 0 0 1px var(--rust); }
+.slot .bar { height: 4px; }
+.cond-good > i { background: var(--ok); } .cond-mid > i { background: var(--warn); } .cond-bad > i { background: var(--bad); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.stat { background: #12161a; border-radius: 3px; padding: 6px 8px; }
+.stat b { display: block; font-family: var(--display); font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--dim); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; font-family: var(--display); }
+.fuelrow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; margin-top: 12px; }
+.recipe { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: var(--panel-2); border-radius: 3px; padding: 6px 8px; }
+.recipe small { display: block; color: var(--dim); font-size: 12px; }
+.recipe small .lack { color: var(--bad); }
+
+/* ---------- title / end screens ---------- */
+.screen { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); background: linear-gradient(180deg, rgba(20, 23, 26, 0.35), rgba(20, 23, 26, 0.9)); overflow: auto; }
+.screen .inner { width: min(560px, 100%); }
+.screen .inner.credits-screen { width: min(820px, 100%); background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--rust); border-radius: 4px; padding: 16px 18px 18px; }
+/* credits list */
+.credits { list-style: none; margin: 0 0 4px; padding: 0; columns: 2 230px; column-gap: 20px; font-size: 12.5px; line-height: 1.6; }
+.credits li { break-inside: avoid; }
+.credits a { color: var(--bone); text-decoration: none; border-bottom: 1px solid var(--line); }
+.credits a:hover { border-bottom-color: var(--rust); }
+.credits span { color: var(--dim); }
+.lic { color: var(--dim); font-size: 12.5px; margin: 0 0 6px; }
+.sheet h3, .credits-screen h3 { margin: 14px 0 2px; font-size: 14px; letter-spacing: 0.02em; }
+.logo { font-family: var(--display); font-weight: 700; font-size: clamp(54px, 13vw, 104px); line-height: 0.9; letter-spacing: 0.02em; text-transform: uppercase; margin: 0; }
+.logo span { color: var(--rust); }
+.tag { font-size: 17px; margin: 10px 0 18px; line-height: 1.4; max-width: 46ch; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; margin: 16px 0 0; font-size: 13px; color: var(--dim); }
+.keys dt { white-space: nowrap; } .keys dd { margin: 0; }
+.note { color: var(--warn); font-size: 13px; margin-top: 12px; }
+.touch-note { display: none; }
+@media (pointer: coarse) { .touch-note { display: block; } }
+.endstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+
+@media (max-width: 720px) {
+  .cols { grid-template-columns: 1fr; }
+  .hud-tr { width: 170px; } .hud-tl { width: 160px; } .hud-bl { display: none; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .toast { animation-duration: 3.6s; animation-timing-function: step-end; } }
+</style>
+
+<div id="app" class="intro">
+  <canvas id="view" aria-label="Rustbound game view"></canvas>
+
+  <div class="hud hud-tl" id="hud-tl">
+    <div class="card">
+      <div class="vital" id="v-health"><span>Health</span><div class="bar health"><i></i></div><span class="num">100</span></div>
+      <div class="vital" id="v-hunger"><span>Hunger</span><div class="bar hunger"><i></i></div><span class="num">100</span></div>
+      <div class="vital" id="v-thirst"><span>Thirst</span><div class="bar thirst"><i></i></div><span class="num">100</span></div>
+      <div class="vital" id="v-stamina"><span>Stamina</span><div class="bar stamina"><i></i></div><span class="num">100</span></div>
+    </div>
+    <div class="card where"><span id="region">Scrapyard</span><span id="clock">Day 1 07:12</span></div>
+  </div>
+
+  <div class="hud hud-tr" id="hud-tr">
+    <div class="card"><canvas id="minimap" width="460" height="170" aria-label="Map"></canvas></div>
+    <div class="card" id="goal"></div>
+  </div>
+
+  <div class="hud hud-bc">
+    <div id="warn" hidden></div>
+    <div id="toasts" aria-live="polite"></div>
+    <div id="prompt" hidden></div>
+  </div>
+
+  <div class="hud hud-bl" id="hud-bl"><span><kbd>Tab</kbd> Backpack &nbsp; <kbd>Q</kbd><kbd>E</kbd> Rotate view &nbsp; <kbd>Wheel</kbd> Zoom &nbsp; <kbd>Esc</kbd> Menu</span></div>
+
+  <div class="hud hud-br card" id="dash" hidden>
+    <div class="speed"><span id="d-speed">0</span><small>KM/H</small></div>
+    <div class="gauge" id="g-fuel"><span>Fuel</span><div class="bar"><i></i></div><span class="num">0 L</span></div>
+    <div class="gauge" id="g-temp"><span>Temp</span><div class="bar"><i></i></div><span class="num">25°</span></div>
+    <div class="gauge" id="g-body"><span>Chassis</span><div class="bar"><i></i></div><span class="num">100%</span></div>
+  </div>
+
+  <div class="sheet-wrap" id="panel" hidden></div>
+  <div class="screen" id="screen"></div>
+</div>

@@ -1,0 +1,24 @@
+{
+  "gpu": "dgpu",
+  "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 6GB Laptop GPU (0x000025EC) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "pack": true,
+  "loadMs": 1246,
+  "fps": {
+    "high": {
+      "scrapyard": 160,
+      "forest": 150,
+      "fuel-station": 154,
+      "town-day": 137,
+      "town-night": 125,
+      "dead-stretch": 204
+    },
+    "low": {
+      "scrapyard": 356,
+      "forest": 403,
+      "fuel-station": 333,
+      "town-day": 314,
+      "town-night": 281,
+      "dead-stretch": 503
+    }
+  }
+}

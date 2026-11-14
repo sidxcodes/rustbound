@@ -1,0 +1,5 @@
+node_modules/
+assets-src/
+src/assets/mixamo/
+src/assets/manifest.js
+dist/

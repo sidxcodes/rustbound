@@ -1,0 +1,66 @@
+{
+ "grass": {
+  "id": "leafy_grass",
+  "metres": 2
+ },
+ "dirt": {
+  "id": "dirt",
+  "metres": 2
+ },
+ "cracked": {
+  "id": "dry_ground_01",
+  "metres": 4
+ },
+ "sand": {
+  "id": "dense_sand",
+  "metres": 1.8000000715255737
+ },
+ "asphalt": {
+  "id": "asphalt_02",
+  "metres": 3.000000238418579
+ },
+ "concrete": {
+  "id": "dirty_concrete",
+  "metres": 3
+ },
+ "plaster": {
+  "id": "worn_plaster_wall",
+  "metres": 1.8000000715255737
+ },
+ "corrugated": {
+  "id": "worn_corrugated_iron",
+  "metres": 1.7999995946884155
+ },
+ "rustroof": {
+  "id": "rusty_corrugated_iron",
+  "metres": 2
+ },
+ "siding": {
+  "id": "weathered_plank_siding",
+  "metres": 1.5700000524520874
+ },
+ "planks": {
+  "id": "weathered_planks",
+  "metres": 2
+ },
+ "floor": {
+  "id": "old_wood_floor",
+  "metres": 3
+ },
+ "roof": {
+  "id": "grey_roof_tiles",
+  "metres": 3
+ },
+ "paint": {
+  "id": "rusty_metal_02",
+  "metres": 1
+ },
+ "rock": {
+  "id": "rock_boulder_dry",
+  "metres": 1.7999999523162842
+ },
+ "bark": {
+  "id": "pine_bark",
+  "metres": 1.9999996423721313
+ }
+}
